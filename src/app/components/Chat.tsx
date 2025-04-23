@@ -1,70 +1,72 @@
 import { Message, OrderBy } from "@ably/chat";
 import { useChatConnection, useMessages } from "@ably/chat/react";
 import { useFormik } from "formik";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { User } from "../utils/interfaces";
 
-export default function Chat() {
-  const [receivedMessages, setMessages] = useState<Message[]>([]);
-  const [messageList, setMessageList] = useState<string[]>([]);
+interface ChatProps {
+  user: User;
+}
+
+export const Chat: React.FC<ChatProps> = ({ user }) => {
+  const [messageHistory, setMessageHistory] = useState<Message[]>([]);
 
   const { currentStatus } = useChatConnection({
     onStatusChange: (statusChange) => {
-      console.log("Connection status changed to: ", statusChange.current);
+      console.log("Connection status changed to:", statusChange.current);
     },
   });
 
   const { roomStatus, roomError, send, get } = useMessages();
 
-  // listen for messages
-  // useMessages({
-  //   listener: (event) => {
-  //     console.log("Received message: ", event.message);
-  //   },
-  // });
-
-  // send messages
+  // on page load get previous message history
+  useEffect(() => {
+    get({
+      limit: 100,
+      orderBy: OrderBy.OldestFirst,
+    }).then((result) => {
+      setMessageHistory(result.items);
+    });
+  }, [get]);
 
   const formik = useFormik({
     initialValues: {
       message: "",
     },
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
+      // send message
       send({
         text: values.message,
       });
-      // TODO: idk if this works if another person is in the chat room
-      setMessageList([...messageList, values.message]);
+
+      // get new message from history
+      get({
+        limit: 100,
+        orderBy: OrderBy.OldestFirst,
+      }).then((result) => {
+        setMessageHistory(result.items);
+      });
+
       formik.resetForm();
+      
     },
   });
-
-  // message history
-  // useEffect(() => {
-  // 	get({
-  //     limit: 100, // max is 1,000
-  //     orderBy: OrderBy.OldestFirst,
-  //   }).then((result) => {
-  //     console.log("Previous messages: ", result);
-  //     setMessages(result.items);
-  //   });
-  // }, []);
-
-  // TODO: useState of send message input, on input change rerender message history?
-  const handleGetMessages = () => {
-    get({
-      limit: 100, // max is 1,000
-      orderBy: OrderBy.OldestFirst,
-    }).then((result) => {
-      console.log("Previous messages: ", result.items);
-      setMessages(result.items);
-    });
-  };
 
   return (
     <div>
       <p>Connection status is: {currentStatus}</p>
       <p>Room status is: {roomStatus}</p>
       {roomError ? <p>Room error is: {roomError.message}</p> : <p>No error</p>}
+
+      <h2>Message History from Alby</h2>
+      {messageHistory.map((msg, index) => (
+        <p key={index} className="message">
+          {index}: {msg.text}, written by:{" "}
+          {msg.clientId === user.id
+            ? `${user.firstName} ${user.lastName}`
+            : "Other"}
+        </p>
+      ))}
 
       <form action="" method="post" onSubmit={formik.handleSubmit}>
         <textarea
@@ -74,25 +76,22 @@ export default function Chat() {
           onChange={formik.handleChange}
           value={formik.values.message}
           placeholder="Type message..."
+          onKeyDown={(event) => {
+            if (event.code === "Enter") {
+              console.log("Enter")
+              formik.submitForm(); // FIXME: why is there an extra enter after submit?
+            }
+          }}
         ></textarea>
-        <button type="submit">Send Message</button>
+
+        {currentStatus === "connected" && roomStatus === "attached" ? (
+          <button type="submit">Send Message</button>
+        ) : (
+          <button type="submit" disabled>
+            Send Message
+          </button>
+        )}
       </form>
-      <button type="button" onClick={handleGetMessages}>
-        Get Prev Messages
-      </button>
-
-      <h2>Static Message List</h2>
-      {messageList.map((message, index) => (
-        <p key={index}>{message}</p>
-      ))}
-
-      {/* TODO: currently only loads after selected "get prev messages" */}
-      <h2>(Dynamic) Received Messages Ably</h2>
-      {receivedMessages.map((message, index) => (
-        <p key={index}>
-          {index}: {message.text}
-        </p>
-      ))}
     </div>
   );
-}
+};

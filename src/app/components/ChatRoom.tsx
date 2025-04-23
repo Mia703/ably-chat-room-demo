@@ -2,24 +2,18 @@
 import * as Ably from "ably";
 import { ChatClient, LogLevel, AllFeaturesEnabled } from "@ably/chat";
 import { ChatClientProvider, ChatRoomProvider } from "@ably/chat/react";
-import Chat from "./Chat";
-import { useEffect, useState } from "react";
 import { User } from "../utils/interfaces";
+import { Chat } from "./Chat";
 
-export default function ChatRoom() {
-  const [user, setUser] = useState<User | null>(null);
+interface ChatRoomProps {
+  user: User;
+}
 
-  useEffect(() => {
-    const user_data = window.sessionStorage.getItem("user");
-    if (user_data) {
-      setUser(JSON.parse(user_data));
-    }
-  }, []);
+export const ChatRoom: React.FC<ChatRoomProps> = ({ user }) => {
 
   const realtimeClient = new Ably.Realtime({
     key: process.env.NEXT_PUBLIC_ABLY_API_KEY,
-    clientId: user ? user.id : "no-client-id", // client id is xata user's table id
-    // clientId: 'no-client-id'
+    clientId: user.id,
   });
 
   const chatClient = new ChatClient(realtimeClient, {
@@ -37,7 +31,7 @@ export default function ChatRoom() {
     <div id="chat-room">
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider id="my-chat-room" options={AllFeaturesEnabled}>
-          <Chat />
+          <Chat user={user} />
         </ChatRoomProvider>
       </ChatClientProvider>
     </div>
