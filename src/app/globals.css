@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
+/* ---------- sub-header ---------- */
+
+/* =================== global variables =================== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #e4e2e2;
+  --font: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* =================== reset default styles =================== */
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--font);
+  font-family: Inter, sans-serif;
+}
+
+/* =================== base page styles =================== */
+
+/* =================== font styles =================== */
+h1 {
+  font-size: 2em;
+  font-weight: 800;
+}
+
+/* =================== constants =================== */
+input, textarea {
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 7px 15px;
+  margin: 5px 0;
+  width: 100%;
+}
+
+button {
+  background-color: black;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: transform 200ms ease-in;
+  font-weight: 700;
+}
+
+
+/* =================== media queries =================== */
+
+/* =================== DESKTOP =================== */
+@media only screen and (min-width: 64.063em) and (max-width: 90em) {
+  button:hover {
+    transform: scale(1.05);
+  }
 }
