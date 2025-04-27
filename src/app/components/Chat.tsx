@@ -8,7 +8,10 @@ interface ChatProps {
   user: User;
 }
 
+// TODO: How do I get updates from others to display
+
 export const Chat: React.FC<ChatProps> = ({ user }) => {
+  // const [loading, setLoading] = useState(true);
   const [messageHistory, setMessageHistory] = useState<Message[]>([]);
 
   const { currentStatus } = useChatConnection({
@@ -27,7 +30,7 @@ export const Chat: React.FC<ChatProps> = ({ user }) => {
     }).then((result) => {
       setMessageHistory(result.items);
     });
-  }, [get]);
+  }, [get, messageHistory]);
 
   const formik = useFormik({
     initialValues: {
@@ -48,7 +51,6 @@ export const Chat: React.FC<ChatProps> = ({ user }) => {
       });
 
       formik.resetForm();
-      
     },
   });
 
@@ -69,20 +71,15 @@ export const Chat: React.FC<ChatProps> = ({ user }) => {
       ))}
 
       <form action="" method="post" onSubmit={formik.handleSubmit}>
-        <textarea
+        <input
+          type="text"
           name="message"
           id="message"
           onBlur={formik.handleBlur}
           onChange={formik.handleChange}
           value={formik.values.message}
           placeholder="Type message..."
-          onKeyDown={(event) => {
-            if (event.code === "Enter") {
-              console.log("Enter")
-              formik.submitForm(); // FIXME: why is there an extra enter after submit?
-            }
-          }}
-        ></textarea>
+        />
 
         {currentStatus === "connected" && roomStatus === "attached" ? (
           <button type="submit">Send Message</button>
